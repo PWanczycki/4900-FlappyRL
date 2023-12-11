@@ -2,10 +2,9 @@ from src.RFB import RbfFeaturizer
 import numpy as np
 import asyncio
 import matplotlib.pyplot as plt
-from src.flappyEnv import FlappyEnv
 from src.flappyEnv2 import FlappyEnv2
 from src.models.QLearning import qlearning
-from src.models import DQN, ActorCritic
+# from src.models import DQN, ActorCritic
 from datetime import datetime
 from src.models.FA.DynaQ import dynaq
 from src.models.featurizer.tile_coding_6d import TileCoder
@@ -95,7 +94,7 @@ def run():
     env = FlappyEnv2()
 
     model = qlearning.QLearner()
-    Pi, Q = model.run(env, gamma=0.9, step_size=0.1, epsilon=0.1, max_episode=60000, callback_step=100, callback=callback)
+    Pi, Q = model.run(env, gamma=0.9, step_size=0.1, epsilon=0.1, max_episode=3000, callback_step=100, callback=callback)
     Pi.tofile('output/Pi.csv', sep=",")
     env.close()
 

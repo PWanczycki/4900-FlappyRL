@@ -1,8 +1,11 @@
 import numpy as np
 from ..A2Helpers import *
+from matplotlib import pyplot as plt
 
 class QLearner:
     def run(self, env, gamma, step_size, epsilon, max_episode, callback_step, callback):
+
+        plt.figure()
 
         def epsilon_greedy_select(q):
             # with small chance, select a random action
@@ -47,10 +50,8 @@ class QLearner:
 
             scores.append(score)
 
-            if episode % callback_step == 0:
-                callback(episode=episode, score=np.mean(scores))
-                scores = []
-
+        plt.plot(scores)
+        plt.show()
         Q_2D = np.reshape(Q, (-1, 2))
         Pi = np.zeros_like(Q_2D)
         
@@ -59,7 +60,7 @@ class QLearner:
 
         # Pi = diagonalization(Pi, np.prod(list(env.get_state_shape)), env.n_actions)
 
-        return Pi, np.reshape(Q_2D, (np.prod(list(env.get_state_shape)) * env.n_actions, 1))
+        return Pi, Q_2D # np.reshape(Q_2D, (np.prod(list(env.get_state_shape)) * env.n_actions, 1))
 
     def _lookup(self, data, indexers):
         if len(indexers) == 0:
