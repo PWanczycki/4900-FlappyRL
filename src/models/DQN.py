@@ -11,13 +11,13 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 GAMMA = 0.99
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 1000
+EPS_START = 0.1
+EPS_END = 0.0001
+EPS_DECAY = 3000
 TAU = 0.005
-LR = 1e-4
+LR = 5e-5
 
 Transition = namedtuple('Transition', 
                         ('state', 'action', 'next_state', 'reward'))
@@ -78,9 +78,9 @@ class DQN_Model:
 
         self.episode_durations = []
 
-    def select_action(self, state):
+    def select_action(self, state, deterministic=False):
         sample = random.random()
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
+        eps_threshold = 0 if deterministic else EPS_END + (EPS_START - EPS_END) * \
             math.exp(-1. * self.steps_done / EPS_DECAY)
         self.steps_done += 1
         if sample > eps_threshold:
@@ -99,12 +99,12 @@ class DQN_Model:
         plt.figure(1)
         durations_t = torch.tensor(self.episode_durations, dtype=torch.float)
         if show_result:
-            plt.title('Result')
+            plt.title('DQN Result')
         else:
             plt.clf()
             plt.title('Training...')
         plt.xlabel('Episode')
-        plt.ylabel('Duration')
+        plt.ylabel('Total Rewards')
         plt.plot(durations_t.numpy())
         # Take 100 episode averages and plot them too
         if len(durations_t) >= 100:
@@ -166,11 +166,13 @@ class DQN_Model:
             # Initialize the environment and get it's state
             state, info = self.env.reset(seed=seed)
             state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+            total_rew = 0
             for t in count():
                 action = self.select_action(state)
                 observation, reward, terminated, truncated, _ = self.env.step(action.item())
                 reward = torch.tensor([reward], device=self.device)
                 done = terminated or truncated
+                total_rew += reward
 
                 if terminated:
                     next_state = None
@@ -195,11 +197,11 @@ class DQN_Model:
                 self.target_net.load_state_dict(target_net_state_dict)
 
                 if done:
-                    self.episode_durations.append(t + 1)
+                    self.episode_durations.append(total_rew)
                     self.plot_durations()
                     break
 
-            if i > 0 and i % 250 == 0:
+            if i > 1 and (i+1) % 500 == 0:
                 torch.save(self.target_net.state_dict(), f'output/DQNweights_{i}.pt')
                 print(f'Saved weigths after {i} episodes')
         
@@ -207,3 +209,24 @@ class DQN_Model:
         self.plot_durations(show_result=True)
         plt.ioff()
         plt.show()
+
+    def load_params(self, filename):
+        loaded_state_dict = torch.load(filename)
+        self.policy_net.load_state_dict(loaded_state_dict)
+        self.target_net.load_state_dict(loaded_state_dict)
+
+    def eval(self, num_episodes, seed=5):
+        for episode in range(num_episodes):
+            state, info = self.env.reset(seed=seed)
+            state = torch.tensor(state, dtype=torch.float32, device=self.device).unsqueeze(0)
+            total_reward = 0
+            while True:
+                
+                action = self.select_action(state, deterministic=True)
+                obs, reward, game_over, _, info = self.env.step(action.item())
+                total_reward += reward
+                if game_over:
+                    print(f"Total Reward: {total_reward}")
+                    break
+
+                state = torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)

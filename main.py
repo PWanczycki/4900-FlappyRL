@@ -10,6 +10,8 @@ from datetime import datetime
 from src.models.FA.DynaQ import dynaq
 from src.models.featurizer.tile_coding_6d import TileCoder
 
+import torch
+import random as rnd
 
 def run_dynaq():
     env = FlappyEnv2()
@@ -114,7 +116,18 @@ def run_dqn():
     model = DQN.DQN_Model(env)
     # print(model.device)
 
-    model.train(500, 9)
+    model.train(3000)
+
+def test_dqn():
+    env = FlappyEnv2()
+
+    model = DQN.DQN_Model(env)
+
+    model.load_params("output/DQNweights_2999.pt")
+    
+    model.eval(10)#, rnd.randrange(6, 1000))
+
+    env.close()
 
 def run_ac():
     env = FlappyEnv2()
@@ -147,3 +160,5 @@ if __name__ == "__main__":
     # run_AAC()
     # run_dqn()
     # run_ac_tc()
+    # run_dqn()
+    pass
