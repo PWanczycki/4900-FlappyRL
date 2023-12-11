@@ -145,3 +145,4 @@ if __name__ == "__main__":
     # run_ac()
     # run_AAC()
     # run_dqn()
+    # run_ac_tc()
