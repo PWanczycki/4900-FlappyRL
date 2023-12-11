@@ -14,12 +14,13 @@ from src.models.featurizer.tile_coding_6d import TileCoder
 def run_dynaq():
     env = FlappyEnv2()
 
-    ftr = RbfFeaturizer(env, 100)
-    W = dynaq.DynaQFA(env, ftr, epsilon=0.1, max_episode=100000)
-    print(W)
+    # ftr = RbfFeaturizer(env, 100)
+    Q, F, B = dynaq.DynaQFA(env, dynaq.CustomFeaturizer(env), epsilon=0.5, max_episode=3000)
+    np.save("QData.npy", Q)
+    np.save("FData.npy", F)
+    np.save("BData.npy", B)
     env.close()
 
-    return
 
 def linear_regression():
     env = FlappyEnv2()

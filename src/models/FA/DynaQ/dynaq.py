@@ -1,3 +1,4 @@
+from os.path import isfile
 import numpy as np
 from ...A2Helpers import *
 import matplotlib.pyplot as plt
@@ -6,6 +7,16 @@ from queue import PriorityQueue
 # credits:
 # https://arxiv.org/ftp/arxiv/papers/1206/1206.3285.pdf
 
+class CustomFeaturizer:
+
+    def __init__(self, env):
+        self.env = env
+        self.n_features = len(env.get_state_shape)
+
+    def featurize(self, state):
+        maxes = self.env.get_state_shape
+        return np.clip(state / maxes, 0, 1)
+
 
 def DynaQFA(env, 
             featurizer, 
@@ -13,14 +24,21 @@ def DynaQFA(env,
             step_size=0.005,
             epsilon=0.1,
             max_episode=400,
-            max_model_step=20):
+            max_model_step=20,
+            load_from_file=True):
     start_epsilon = epsilon
-    n_actions = 3
+    n_actions = 2
     taken_actions = []
 
     Q = np.zeros((featurizer.n_features, n_actions))
     F = np.zeros((n_actions, featurizer.n_features, featurizer.n_features))
     b = np.zeros((n_actions, featurizer.n_features))
+
+    if load_from_file:
+        if isfile("QData.npy"): Q = np.load("QData.npy")
+        if isfile("FData.npy"): F = np.load("FData.npy")
+        if isfile("BData.npy"): b = np.load("BData.npy")
+
 
     def epsilon_greedy_select(s):
         # with small chance, select a random action
@@ -33,22 +51,13 @@ def DynaQFA(env,
         return a
     
     max_reward = None
-    all_rewards = []
-
-
-    tiling_particulars = [[(100,100,2),(10,10,0.2)],[(100,100,2),(0.0,0.0,0.0)],[(100,100,2),(-10,-10,-0.2)]] #[(#ofHorizontalPartition,#ofVerticalPartition),(horizontalShift, verticalShift)]
-    # ts = featurizer.create_tilings_6d(tiling_particulars)
-    
-    
-    plt.ion()
-    plt.figure(1)
+    all_rewards = []    
 
     for current_ep in range(max_episode):
-        if current_ep % 100 == 0: epsilon = 0
-        # epsilon = start_epsilon / (current_ep * 100 / max_episode + 1) ** 2
+        epsilon = start_epsilon / (current_ep * 100 / max_episode + 1) ** 2
         # reset world and get initial state        
         state, _ = env.reset()  
-        state = featurizer.featurize(state) # _6d(state, ts) / 100
+        state = featurizer.featurize(state)
         terminated = truncated = False
         
         total_reward = 0
@@ -62,9 +71,8 @@ def DynaQFA(env,
             new_state = featurizer.featurize(new_state) # _6d(new_state, ts) / 100            
 
             delta = reward + gamma * (Q.T[a] @ new_state) - Q.T[a] @ state
-            new_q = Q[:,a] + step_size * delta * state
-            Q[:,a] = new_q
-            F[a] = F[a] + step_size * (np.subtract(new_state, F[a] @ state)) @ state
+            Q[:,a] = Q[:,a] + step_size * delta * state             
+            F[a] = F[a] + step_size * (new_state - F[a] @ state) * state
             b[a] = b[a] + step_size * (reward - b[a].T @ state) * state
             
             # pqueue = PriorityQueue()
@@ -96,22 +104,14 @@ def DynaQFA(env,
                 new_state = F[a] @ state                
                 r = b[a].T @ state  
                 
-                # print(np.max([Q.T[i] * new_state for i in range(n_actions)], axis=1))
-                new_q = Q[:,a] + step_size * (r + (gamma * Q.T[a] @ new_state) - (Q.T[a] @ state)) * state
-                Q[:,a] = new_q
-
+                Q[:,a] = Q[:,a] + step_size * (r + (gamma * Q.T[a] @ new_state) - (Q.T[a] @ state)) * state                
+                                
             state = temp
             
         if not max_reward or max_reward < total_reward:
             max_reward = total_reward
-        if current_ep % 100 == 0: 
-            epsilon = start_epsilon
-            print(f"GREEDY SELECT STEP: {total_reward}")
-            
-        all_rewards = all_rewards[:min(len(all_rewards), 99)]   
         all_rewards.append(total_reward)
-        plt.plot(all_rewards)   
-        
+
     # Pi = np.zeros_like(Q)
     
     # for i in range(len(Q)):
@@ -119,5 +119,7 @@ def DynaQFA(env,
 
     # Pi = diagonalization(Pi, env.n_states, env.n_actions)
     print(f"maximum reward: {max_reward}")
+    np.save("rewards.npy", all_rewards)
     plt.plot(all_rewards)
-    return Q # Pi, np.reshape(Q, (env.n_states * env.n_actions, 1))
+    plt.show()
+    return Q, F, b # Pi, np.reshape(Q, (env.n_states * env.n_actions, 1))

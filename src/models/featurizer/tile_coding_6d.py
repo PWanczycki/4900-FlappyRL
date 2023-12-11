@@ -51,6 +51,7 @@ class TileCoder:
 		return tilings
 
 
+
 	def featurize(self, state):
 		#tilings[0][0] --> is the 1st tile's horizontal partition points
 		#tilings[0][1] --> is the 1st tile's vertical partition points
@@ -90,6 +91,7 @@ class TileCoder:
 		for i in range(len(feature)):
 			result.append(np.eye(101)[feature[i]])
 		flattened_feature = np.array(result).flatten()
+
 		#print(flattened_feature.shape)
 
 
