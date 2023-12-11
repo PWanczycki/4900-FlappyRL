@@ -4,7 +4,7 @@ import asyncio
 import matplotlib.pyplot as plt
 from src.flappyEnv2 import FlappyEnv2
 from src.models.QLearning import qlearning
-# from src.models import DQN, ActorCritic
+from src.models import DQN, ActorCritic
 from datetime import datetime
 from src.models.FA.DynaQ import dynaq
 from src.models.featurizer.tile_coding_6d import TileCoder
@@ -90,7 +90,7 @@ def linear_regression():
     
     env.close()
 
-def run():
+def run_tabularQlearning():
     env = FlappyEnv2()
 
     model = qlearning.QLearner()
@@ -118,9 +118,21 @@ def run_ac():
     env = FlappyEnv2()
     featurizer = ActorCritic.RbfFeaturizer(env, 100)
 
-    Theta, w, eval_returns = ActorCritic.ActorCritic(env, featurizer, ActorCritic.evaluate, max_episodes=1000)
+    Theta, w, eval_returns = ActorCritic.ActorCritic(env, featurizer, ActorCritic.evaluate, max_episodes=10000)
 
-    print(eval_returns)
+def run_AAC():
+    env = FlappyEnv2()
+    featurizer = ActorCritic.RbfFeaturizer(env, 100)
+
+    Theta, w, eval_returns = ActorCritic.AdvantageActorCritic(env, featurizer, ActorCritic.evaluate, max_episodes=10000)
 
 if __name__ == "__main__":
-    run()
+#   Uncomment each run function when performing testing on any given model
+    run_dynaq()
+  #q-learning with FA
+#     linear_regression()
+#     run_tabularQlearning()
+    # run_ac()
+#     run_AAC()
+    # run_dqn()
+    
