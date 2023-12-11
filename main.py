@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from src.flappyEnv2 import FlappyEnv2
 from src.models.QLearning import qlearning
 from src.models import ActorCritic, ActorCriticWithTileCoding
+from src.models import DQN
 from datetime import datetime
 from src.models.FA.DynaQ import dynaq
 from src.models.featurizer.tile_coding_6d import TileCoder
