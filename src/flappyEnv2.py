@@ -77,12 +77,12 @@ class FlappyEnv2(gym.Env):
         return []
         
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=5, options=None):
         # We need the following line to seed self.np_random
-        super().reset(seed=seed)
+        # super().reset(seed=seed)
         # randomize starting height (20-70% of screen height from top)
         start_pos = (self.np_random.choice(51) + 20) / 100.0 
-        rnd.seed(seed)
+        # rnd.seed(seed)
         self.game.reset(start_pos)
         self.pipe_count = 0
 
