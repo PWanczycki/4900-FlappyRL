@@ -13,6 +13,7 @@ import numpy as np
 
 class TileCoder:
 	def __init__(self):
+		self.n_features = 3030
 		self.width = 288
 		self.height = 512
 		self.velocity = 20
@@ -50,7 +51,8 @@ class TileCoder:
 		return tilings
 
 
-	def featurize_6d(self, state):
+
+	def featurize(self, state):
 		#tilings[0][0] --> is the 1st tile's horizontal partition points
 		#tilings[0][1] --> is the 1st tile's vertical partition points
 		#feature = [horizontalZone in tile 1, horizontalZone in tile 2, ..., verticalZone in tile 1, verticalZone in tile 2...]
@@ -89,6 +91,8 @@ class TileCoder:
 		for i in range(len(feature)):
 			result.append(np.eye(101)[feature[i]])
 		flattened_feature = np.array(result).flatten()
-		print(flattened_feature)
+
+		#print(flattened_feature.shape)
+
 
 		return flattened_feature #vector
